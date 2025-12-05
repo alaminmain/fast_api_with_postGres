@@ -9,7 +9,7 @@ load_dotenv()
 
 # Get the database URL from environment variables. 
 # If not found, default to a local postgres connection string.
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost/stock_db")
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:123456@localhost/stock_db")
 
 # Create the SQLAlchemy engine. This is the core interface to the database.
 # It manages the connection pool and dialect (PostgreSQL in this case).

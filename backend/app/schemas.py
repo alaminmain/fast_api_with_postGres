@@ -24,7 +24,7 @@ class Stock(StockBase):
     # Config class to tell Pydantic to read data from ORM models (SQLAlchemy objects)
     # instead of just dictionaries.
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class MarketData(BaseModel):
     ltp: float
@@ -39,7 +39,7 @@ class MarketData(BaseModel):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Extended Stock schema that includes nested Market Data.
 class StockDetail(Stock):
@@ -60,7 +60,7 @@ class Transaction(TransactionBase):
     stock: Optional[Stock] = None # Include stock details in transaction response
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class WatchlistBase(BaseModel):
     stock_id: int
@@ -73,7 +73,7 @@ class Watchlist(WatchlistBase):
     stock: StockDetail # Nested stock details
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class AlertBase(BaseModel):
     stock_id: int
