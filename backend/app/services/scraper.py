@@ -21,12 +21,20 @@ def scrape_dse_data(db: Session):
         soup = BeautifulSoup(response.content, 'html.parser')
         
         # The data is usually in a table. We need to find the right table.
-        # We look for a table that contains "Trading Code" in its header.
+        # Heuristic: Find the table with the most rows having >= 10 columns
         table = None
+        max_valid_rows = 0
+        
         for t in soup.find_all('table'):
-            if t.find('th') and 'Trading Code' in t.text:
+            rows = t.find_all('tr')
+            valid_rows_count = sum(1 for row in rows if len(row.find_all('td')) >= 10)
+            
+            if valid_rows_count > max_valid_rows:
+                max_valid_rows = valid_rows_count
                 table = t
-                break
+        
+        if table:
+            logger.info(f"Found data table with {max_valid_rows} valid rows.")
         
         if not table:
             logger.error("Could not find data table on DSE page")
