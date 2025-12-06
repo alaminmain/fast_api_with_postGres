@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, TrendingUp, PieChart, Menu, X, Bell } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, PieChart, Menu, X, Bell, LogOut } from 'lucide-react';
 import clsx from 'clsx';
+import AuthContext from '../context/AuthContext';
 
 const Layout = () => {
+    const { user, logout } = useContext(AuthContext);
     // useState hook to manage the state of the mobile menu (open/closed).
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -60,6 +62,27 @@ const Layout = () => {
                             </Link>
                         );
                     })}
+
+                    {user ? (
+                        <button
+                            onClick={() => {
+                                logout();
+                                setIsMobileMenuOpen(false);
+                            }}
+                            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-red-600 hover:bg-red-50 mt-4"
+                        >
+                            <LogOut size={20} />
+                            <span className="font-medium">Logout</span>
+                        </button>
+                    ) : (
+                        <Link
+                            to="/login"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-indigo-600 hover:bg-indigo-50 mt-4"
+                        >
+                            <span className="font-medium">Login</span>
+                        </Link>
+                    )}
                 </nav>
             </div>
 

@@ -35,8 +35,22 @@ def create_stock(db: Session, stock: schemas.StockCreate):
     db.refresh(db_stock)
     return db_stock
 
-def get_transactions(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Transaction).offset(skip).limit(limit).all()
+def get_transactions(
+    db: Session, 
+    user_id: int, 
+    start_date: datetime = None, 
+    end_date: datetime = None, 
+    skip: int = 0, 
+    limit: int = 100
+):
+    query = db.query(models.Transaction).filter(models.Transaction.user_id == user_id)
+    
+    if start_date:
+        query = query.filter(models.Transaction.date >= start_date)
+    if end_date:
+        query = query.filter(models.Transaction.date <= end_date)
+        
+    return query.order_by(models.Transaction.date.desc()).offset(skip).limit(limit).all()
 
 def create_transaction(db: Session, transaction: schemas.TransactionCreate):
     db_transaction = models.Transaction(**transaction.dict())
@@ -59,11 +73,11 @@ def add_to_watchlist(db: Session, stock_id: int):
     db.refresh(db_item)
     return db_item
 
-def get_alerts(db: Session):
-    return db.query(models.Alert).filter(models.Alert.is_active == True).all()
+def get_alerts(db: Session, user_id: int):
+    return db.query(models.Alert).filter(models.Alert.is_active == True, models.Alert.user_id == user_id).all()
 
-def create_alert(db: Session, alert: schemas.AlertCreate):
-    db_alert = models.Alert(**alert.dict())
+def create_alert(db: Session, alert: schemas.AlertCreate, user_id: int):
+    db_alert = models.Alert(**alert.dict(), user_id=user_id)
     db.add(db_alert)
     db.commit()
     db.refresh(db_alert)

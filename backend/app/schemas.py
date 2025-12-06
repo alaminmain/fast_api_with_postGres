@@ -12,6 +12,26 @@ class StockBase(BaseModel):
     name: str
     sector: Optional[str] = None
 
+class UserBase(BaseModel):
+    email: str
+
+class UserCreate(UserBase):
+    password: str
+
+class User(UserBase):
+    id: int
+    is_active: bool
+
+    class Config:
+        from_attributes = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
 # Schema for creating a stock (input). Inherits from Base.
 class StockCreate(StockBase):
     pass
@@ -41,9 +61,40 @@ class MarketData(BaseModel):
     class Config:
         from_attributes = True
 
+class Sector(BaseModel):
+    id: int
+    name: str
+    
+    class Config:
+        from_attributes = True
+
+class Fundamental(BaseModel):
+    audited_pe: Optional[float] = None
+    forward_pe: Optional[float] = None
+    eps: Optional[float] = None
+    nav: Optional[float] = None
+    beta: Optional[float] = None
+    rsi: Optional[float] = None
+    dividend_yield: Optional[float] = None
+    
+    director_holdings: float
+    govt_holdings: float
+    institute_holdings: float
+    foreign_holdings: float
+    public_holdings: float
+    
+    market_cap: Optional[float] = None
+    paid_up_capital: Optional[float] = None
+    last_updated: datetime
+
+    class Config:
+        from_attributes = True
+
 # Extended Stock schema that includes nested Market Data.
 class StockDetail(Stock):
     market_data: Optional[MarketData] = None
+    sector_rel: Optional[Sector] = None
+    fundamental: Optional[Fundamental] = None
 
 class TransactionBase(BaseModel):
     stock_id: int
@@ -99,3 +150,19 @@ class PortfolioItem(BaseModel):
     current_value: float
     gain_loss: float
     gain_loss_percent: float
+
+class PortfolioBase(BaseModel):
+    stock_id: int
+    quantity: float
+
+class PortfolioCreate(PortfolioBase):
+    pass
+
+class Portfolio(PortfolioBase):
+    id: int
+    user_id: int
+    average_buy_price: float
+    stock: StockDetail
+
+    class Config:
+        from_attributes = True

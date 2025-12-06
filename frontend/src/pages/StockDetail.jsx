@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState, useContext } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import AuthContext from '../context/AuthContext';
 import { getStock, createTransaction } from '../api';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 const StockDetail = () => {
     // useParams hook extracts the 'code' parameter from the URL (e.g., /market/GP -> code="GP").
     const { code } = useParams();
+    const navigate = useNavigate();
+    const { user } = useContext(AuthContext);
     const [stock, setStock] = useState(null);
     const [buyQuantity, setBuyQuantity] = useState('');
     const [buyPrice, setBuyPrice] = useState('');
@@ -106,44 +109,139 @@ const StockDetail = () => {
                 {/* Trade Section (Buy/Sell Form) */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 className="text-lg font-semibold mb-4">Trade</h3>
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-                            <input
-                                type="number"
-                                value={buyQuantity}
-                                onChange={(e) => setBuyQuantity(e.target.value)}
-                                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                            />
+                    {user ? (
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                                <input
+                                    type="number"
+                                    value={buyQuantity}
+                                    onChange={(e) => setBuyQuantity(e.target.value)}
+                                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                                <input
+                                    type="number"
+                                    value={buyPrice}
+                                    onChange={(e) => setBuyPrice(e.target.value)}
+                                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 pt-2">
+                                <button
+                                    onClick={() => handleTransaction('BUY')}
+                                    className="bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700"
+                                >
+                                    Buy
+                                </button>
+                                <button
+                                    onClick={() => handleTransaction('SELL')}
+                                    className="bg-red-600 text-white py-2 rounded-lg font-medium hover:bg-red-700"
+                                >
+                                    Sell
+                                </button>
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                            <input
-                                type="number"
-                                value={buyPrice}
-                                onChange={(e) => setBuyPrice(e.target.value)}
-                                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 pt-2">
+                    ) : (
+                        <div className="text-center py-8">
+                            <p className="text-gray-500 mb-4">Login to trade stocks</p>
                             <button
-                                onClick={() => handleTransaction('BUY')}
-                                className="bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700"
+                                onClick={() => navigate('/login')}
+                                className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700"
                             >
-                                Buy
-                            </button>
-                            <button
-                                onClick={() => handleTransaction('SELL')}
-                                className="bg-red-600 text-white py-2 rounded-lg font-medium hover:bg-red-700"
-                            >
-                                Sell
+                                Login
                             </button>
                         </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Company Profile Section */}
+            {stock.fundamental && (
+                <CompanyProfile stock={stock} />
+            )}
+        </div>
+    );
+};
+
+const CompanyProfile = ({ stock }) => {
+    const f = stock.fundamental;
+    const sector = stock.sector_rel;
+
+    // Data for Shareholding Pie Chart
+    const holdingData = [
+        { name: 'Director', value: f.director_holdings, color: '#4F46E5' }, // Indigo
+        { name: 'Institute', value: f.institute_holdings, color: '#10B981' }, // Emerald
+        { name: 'Foreign', value: f.foreign_holdings, color: '#F59E0B' },   // Amber
+        { name: 'Govt', value: f.govt_holdings, color: '#EF4444' },      // Red
+        { name: 'Public', value: f.public_holdings, color: '#6366F1' },    // Indigo-400
+    ].filter(item => item.value > 0);
+
+    return (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Company Profile</h2>
+
+            {sector && (
+                <div className="mb-6">
+                    <span className="bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">
+                        {sector.name}
+                    </span>
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Visuals: Shareholding Pattern */}
+                <div>
+                    <h3 className="text-lg font-semibold mb-4 text-gray-700">Shareholding Pattern</h3>
+                    <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={holdingData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                >
+                                    {holdingData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Financial Fundamentals Grid */}
+                <div>
+                    <h3 className="text-lg font-semibold mb-4 text-gray-700">Fundamental Ratios</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <InfoCard label="Audited PE" value={f.audited_pe} />
+                        <InfoCard label="Forward PE" value={f.forward_pe} />
+                        <InfoCard label="EPS" value={f.eps} />
+                        <InfoCard label="NAV" value={f.nav} />
+                        <InfoCard label="Market Cap (mn)" value={f.market_cap} />
+                        <InfoCard label="Paid-up Capital (mn)" value={f.paid_up_capital} />
+                        <InfoCard label="Dividend Yield" value={`${f.dividend_yield}%`} />
+                        <InfoCard label="RSI (14)" value={f.rsi} />
                     </div>
                 </div>
             </div>
         </div>
     );
 };
+
+const InfoCard = ({ label, value }) => (
+    <div className="p-4 bg-gray-50 rounded-lg">
+        <p className="text-sm text-gray-500 mb-1">{label}</p>
+        <p className="font-semibold text-gray-900">{value !== null && value !== undefined ? value : 'N/A'}</p>
+    </div>
+);
 
 export default StockDetail;

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
 from . import models, database
-from .routers import market, portfolio
+from .routers import market, portfolio, auth, alerts
 from fastapi.middleware.cors import CORSMiddleware
 
 # Create all database tables defined in models.py
@@ -22,8 +22,10 @@ app.add_middleware(
 )
 
 # Include routers. This keeps the code organized by feature.
+app.include_router(auth.router)
 app.include_router(market.router)
 app.include_router(portfolio.router)
+app.include_router(alerts.router)
 
 @app.get("/")
 def read_root():
